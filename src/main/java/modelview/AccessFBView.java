@@ -90,6 +90,9 @@ public class AccessFBView {
         data.put("Age", Integer.parseInt(ageField.getText()));
        
         //asynchronously write data
+        nameField.setText(null);
+        majorField.setText(null);
+        ageField.setText(null);
         ApiFuture<WriteResult> result = docRef.set(data);
     }
     
@@ -104,8 +107,8 @@ public class AccessFBView {
         try 
         {
             documents = future.get().getDocuments();
-            if(documents.size()>0)
-            {
+            if(documents.size()>0) {
+                outputField.clear();
                 System.out.println("Outing....");
                 for (QueryDocumentSnapshot document : documents) 
                 {
