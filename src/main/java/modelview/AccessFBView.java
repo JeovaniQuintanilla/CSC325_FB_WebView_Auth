@@ -43,15 +43,14 @@ public class AccessFBView {
     private TextField majorField;
     @FXML
     private TextField ageField;
-    @FXML
     private Button writeButton;
     @FXML
-    private Button readButton;
-    @FXML
     private TextArea outputField;
-     private boolean key;
+    private boolean key;
     private ObservableList<Person> listOfUsers = FXCollections.observableArrayList();
     private Person person;
+    @FXML
+    private Button switchroot;
     public ObservableList<Person> getListOfUsers() {
         return listOfUsers;
     }
@@ -74,10 +73,7 @@ public class AccessFBView {
         readFirebase();
     }
     
-            @FXML
-    private void regRecord(ActionEvent event) {
-        registerUser();
-    }
+     
     
      @FXML
     private void switchToSecondary() throws IOException {
@@ -92,6 +88,7 @@ public class AccessFBView {
         data.put("Name", nameField.getText());
         data.put("Major", majorField.getText());
         data.put("Age", Integer.parseInt(ageField.getText()));
+       
         //asynchronously write data
         ApiFuture<WriteResult> result = docRef.set(data);
     }
@@ -145,25 +142,20 @@ public class AccessFBView {
         }
     }
 
-    public boolean registerUser() {
-        UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                .setEmail("user@example.com")
-                .setEmailVerified(false)
-                .setPassword("secretPassword")
-                .setPhoneNumber("+11234567890")
-                .setDisplayName("John Doe")
-                .setDisabled(false);
-
-        UserRecord userRecord;
-        try {
-            userRecord = App.fauth.createUser(request);
-            System.out.println("Successfully created new user: " + userRecord.getUid());
-            return true;
-
-        } catch (FirebaseAuthException ex) {
-           // Logger.getLogger(FirestoreContext.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
-        }
-        
+    @FXML
+    private void toSignUpWindow(ActionEvent event) throws IOException {
+        App.setRoot("SignUp.fxml");
     }
+
+    @FXML
+    private void SignOut(ActionEvent event) throws IOException {
+        App.setRoot("SignIn.fxml");
+    }
+
+    @FXML
+    private void closeProgram(ActionEvent event) {
+        System.exit(0);
+    }
+
+   
 }
