@@ -30,8 +30,13 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseEvent;
 import models.Person;
 
 public class AccessFBView {
@@ -44,13 +49,26 @@ public class AccessFBView {
     @FXML
     private TextField ageField;
     private Button writeButton;
-    @FXML
     private TextArea outputField;
     private boolean key;
     private ObservableList<Person> listOfUsers = FXCollections.observableArrayList();
     private Person person;
     @FXML
     private Button switchroot;
+   @FXML
+    private TableView<Person> tableVW;
+    @FXML
+    private TableColumn<Person, String> NameCol;
+    @FXML
+    private TableColumn<Person, String> MajorCol;
+    @FXML
+    private TableColumn<Person, Integer> AgeCol;
+    @FXML
+    private Button updateBtn;
+    @FXML
+    private Button deleteBtn;
+    @FXML
+    private Label selectionLabel;
     public ObservableList<Person> getListOfUsers() {
         return listOfUsers;
     }
@@ -104,34 +122,32 @@ public class AccessFBView {
         ApiFuture<QuerySnapshot> future =  App.fstore.collection("References").get();
         // future.get() blocks on response
         List<QueryDocumentSnapshot> documents;
-        try 
-        {
+        try {
             documents = future.get().getDocuments();
-            if(documents.size()>0) {
-                outputField.clear();
+            if (documents.size() > 0) {
+                tableVW.getItems().clear();
                 System.out.println("Outing....");
-                for (QueryDocumentSnapshot document : documents) 
-                {
-                    outputField.setText(outputField.getText()+ document.getData().get("Name")+ " , Major: "+
-                            document.getData().get("Major")+ " , Age: "+
-                            document.getData().get("Age")+ " \n ");
-                    System.out.println(document.getId() + " => " + document.getData().get("Name"));
-                    person  = new Person(String.valueOf(document.getData().get("Name")), 
+                for (QueryDocumentSnapshot document : documents) {
+
+                    person = new Person(String.valueOf(document.getData().get("Name")),
                             document.getData().get("Major").toString(),
                             Integer.parseInt(document.getData().get("Age").toString()));
+
                     listOfUsers.add(person);
+                    NameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+                    MajorCol.setCellValueFactory(new PropertyValueFactory<>("major"));
+                    AgeCol.setCellValueFactory(new PropertyValueFactory<>("age"));
+                    tableVW.setItems(listOfUsers);
+
                 }
+
+            } else {
+                System.out.println("No data");
             }
-            else
-            {
-               System.out.println("No data"); 
-            }
-            key=true;
-            
-        }
-        catch (InterruptedException | ExecutionException ex) 
-        {
-             ex.printStackTrace();
+            key = true;
+
+        } catch (InterruptedException | ExecutionException ex) {
+            ex.printStackTrace();
         }
         return key;
     }
@@ -160,5 +176,68 @@ public class AccessFBView {
         System.exit(0);
     }
 
-   
+    @FXML
+    private void SendData(MouseEvent event) {
+        Integer age = tableVW.getSelectionModel().getSelectedItem().getAge();
+
+        nameField.setText(tableVW.getSelectionModel().getSelectedItem().getName());
+        majorField.setText(tableVW.getSelectionModel().getSelectedItem().getMajor());
+        ageField.setText(age.toString());
+    }
+
+    @FXML
+   private void deleteData(ActionEvent event) {
+
+        Person rowToDelete = tableVW.getSelectionModel().getSelectedItem();
+        ApiFuture<QuerySnapshot> future = App.fstore.collection("References").get();
+
+        ApiFuture<WriteResult> writeResult;
+        List<QueryDocumentSnapshot> documents;
+        try {
+            documents = future.get().getDocuments();
+            //Integer age = rowToDelete.getAge();
+
+            for (QueryDocumentSnapshot document : documents) {
+                if (document.getData().get("Name").equals(rowToDelete.getName()) && document.getData().get("Major").equals(rowToDelete.getMajor())) {
+                    writeResult = App.fstore.collection("References").document(document.getId()).delete();
+                    selectionLabel.setText("Row Deleted, Re-Read To See New Table");
+                    nameField.setText(null);
+                    majorField.setText(null);
+                    ageField.setText(null);
+
+                }
+            }
+
+        } catch (InterruptedException ex) {} catch (ExecutionException ex) {}
+    }
+
+    @FXML
+    private void updateData(ActionEvent event) {
+      Person rowToUpdate = tableVW.getSelectionModel().getSelectedItem();
+        ApiFuture<QuerySnapshot> future = App.fstore.collection("References").get();
+        ApiFuture<WriteResult> writeResult;
+
+        List<QueryDocumentSnapshot> documents;
+        try {
+            documents = future.get().getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                if ((nameField != null && majorField != null && ageField != null)
+                        && (document.getData().get("Name").equals(rowToUpdate.getName()) && document.getData().get("Major").equals(rowToUpdate.getMajor()))) {
+                    DocumentReference docRef = App.fstore.collection("References").document(document.getId());
+                    writeResult = docRef.update("Name", nameField.getText());
+                    writeResult = docRef.update("Major", majorField.getText());
+                    writeResult = docRef.update("Age", ageField.getText());
+                    selectionLabel.setText("Row updated, Re-Read To See New Table");
+                    nameField.setText(null);
+                    majorField.setText(null);
+                    ageField.setText(null);
+                    //String id = ;
+                    System.out.println(document.getId());
+
+                }
+            }
+
+        } catch (InterruptedException ex) {} catch (ExecutionException ex) {}
+    }
 }
